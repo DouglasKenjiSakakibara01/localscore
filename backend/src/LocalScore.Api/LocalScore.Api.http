@@ -1,0 +1,6 @@
+@LocalScore.Api_HostAddress = http://localhost:5174
+
+GET {{LocalScore.Api_HostAddress}}/health
+Accept: text/plain
+
+###
