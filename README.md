@@ -11,6 +11,10 @@ Responsive web application for managing amateur football championships.
 
 - Angular 20
 - ASP.NET Core Web API with .NET 9
+- PostgreSQL
+- Entity Framework Core with Npgsql
+- ASP.NET Core Identity
+- JWT authentication with refresh-token rotation
 
 ## Structure
 
@@ -19,37 +23,80 @@ localscore/
 ├── frontend/                          # Angular application
 ├── backend/
 │   ├── LocalScore.sln                 # Solution to open in Visual Studio
-│   └── src/
-│       ├── LocalScore.Api/            # HTTP, application composition, and configuration
-│       ├── LocalScore.Application/    # Future use cases
-│       ├── LocalScore.Domain/         # Future business rules
-│       └── LocalScore.Infrastructure/ # Future persistence and integrations
+│   ├── src/
+│   │   ├── LocalScore.Api/            # HTTP, application composition, and configuration
+│   │   ├── LocalScore.Application/    # Use cases and application contracts
+│   │   ├── LocalScore.Domain/         # Business rules
+│   │   └── LocalScore.Infrastructure/ # Identity, persistence, and integrations
+│   └── tests/
+│       └── LocalScore.Tests/          # Backend unit tests
+└── docs/
+    └── implementation-plan.md
 ```
 
 ## Prerequisites
 
 - .NET SDK 9.0.203 or a compatible patch release from the 9.0 line
+- Entity Framework Core CLI tools 9.x
 - Node.js 22
 - npm 10
 - Angular CLI 20
+- PostgreSQL with a local database named `localscore`
+
+Docker is intentionally not part of the current development environment.
 
 ## Running locally
 
-1. Start the API:
+1. Trust the ASP.NET Core development HTTPS certificate if needed:
+
+   ```powershell
+   dotnet dev-certs https --trust
+   ```
+
+2. Start the API:
 
    ```powershell
    dotnet run --project backend/src/LocalScore.Api
    ```
 
-2. In another terminal, start the frontend:
+3. In another terminal, start the frontend:
 
    ```powershell
    Set-Location frontend
    npm start
    ```
 
-The frontend runs at `http://localhost:4200`. The API exposes HTTP at `http://localhost:5174` and HTTPS at `https://localhost:7106` through the local launch profiles.
+The frontend runs at `http://localhost:4200` and proxies `/api` requests to the local HTTPS API at `https://localhost:7106`. The API also exposes HTTP at `http://localhost:5174` through its local launch profiles.
+
+## Authentication endpoints
+
+```text
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+POST /api/v1/auth/refresh
+POST /api/v1/auth/logout
+GET  /api/v1/auth/me
+```
+
+The access token is stored in the browser's `localStorage`. The raw refresh token is only sent through the secure, HttpOnly `LocalScore.RefreshToken` cookie.
+
+## Verification
+
+Backend build and unit tests:
+
+```powershell
+dotnet test backend/LocalScore.sln
+```
+
+Angular production build and unit tests:
+
+```powershell
+Set-Location frontend
+npm run build
+npm test -- --watch=false --browsers=ChromeHeadless
+```
 
 ## API checks
 
 - `GET /health`: confirms that the API process is running.
+- `GET /openapi/v1.json`: exposes the OpenAPI document in Development.

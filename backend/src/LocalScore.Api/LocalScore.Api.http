@@ -1,6 +1,41 @@
-@LocalScore.Api_HostAddress = http://localhost:5174
+@LocalScore.Api_HostAddress = https://localhost:7106
+@AccessToken = paste-access-token-here
 
 GET {{LocalScore.Api_HostAddress}}/health
 Accept: text/plain
+
+###
+
+POST {{LocalScore.Api_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "LocalScore User",
+  "email": "user@example.com",
+  "password": "password1"
+}
+
+###
+
+POST {{LocalScore.Api_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password1"
+}
+
+###
+
+POST {{LocalScore.Api_HostAddress}}/api/v1/auth/refresh
+
+###
+
+GET {{LocalScore.Api_HostAddress}}/api/v1/auth/me
+Authorization: Bearer {{AccessToken}}
+
+###
+
+POST {{LocalScore.Api_HostAddress}}/api/v1/auth/logout
 
 ###

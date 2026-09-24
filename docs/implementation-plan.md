@@ -15,7 +15,7 @@ Este é o ponto de referência para o escopo, a ordem de implementação, as dec
 | Etapa | Tema | Estado |
 |---|---|---|
 | 1 | Fundação do projeto | Concluída |
-| 2 | Contas e autenticação | Decisões fechadas; implementação não iniciada |
+| 2 | Contas e autenticação | Concluída |
 | 3 | Campeonatos e equipes | Planejada; requer refinamento |
 | 4 | Jogadores e inscrições | Planejada; requer refinamento |
 | 5 | Rodadas e partidas | Planejada; requer refinamento |
@@ -234,7 +234,7 @@ Nenhuma.
 
 # Etapa 2 — Contas e autenticação
 
-**Estado:** decisões fechadas; implementação não iniciada.
+**Estado:** concluída.
 
 ## Objetivo
 
@@ -486,11 +486,15 @@ Ficam adiados testes de integração automatizados que limpem o banco, Testconta
 
 ### 2.1 — Fundamentos de aplicação e erros
 
+**Estado:** concluído.
+
 Implementar `Result`, `Result<T>`, erros de aplicação, conversão para `ProblemDetails`, handler global, `traceId` e testes. Não adicionar banco ou Identity.
 
 **Concluído quando:** falhas esperadas e inesperadas têm contratos distintos e testados; backend compila sem erros.
 
 ### 2.2 — PostgreSQL, EF Core e Identity
+
+**Estado:** concluído.
 
 Adicionar pacotes, User Secrets, `ApplicationUser`, `LocalScoreDbContext`, mapeamentos, política de senha/bloqueio e registros de DI. Não criar endpoints ou JWT.
 
@@ -498,11 +502,15 @@ Adicionar pacotes, User Secrets, `ApplicationUser`, `LocalScoreDbContext`, mapea
 
 ### 2.3 — Refresh tokens e primeira migration
 
+**Estado:** concluído; migration aplicada e validada no PostgreSQL local.
+
 Implementar a entidade, hash, família, rotação persistente, índices e primeira migration. Aplicar manualmente e inspecionar o PostgreSQL local.
 
 **Concluído quando:** somente tabelas de autenticação existem e a migration foi validada.
 
 ### 2.4 — JWT e serviços de autenticação
+
+**Estado:** concluído com testes unitários sem banco.
 
 Implementar emissão, claims, sessão, rotação, detecção de reutilização, múltiplas famílias e limpeza oportunística, com testes unitários.
 
@@ -510,11 +518,15 @@ Implementar emissão, claims, sessão, rotação, detecção de reutilização, 
 
 ### 2.5 — Endpoints da API
 
+**Estado:** concluído; fluxos validados manualmente no PostgreSQL local.
+
 Implementar os cinco endpoints, cookie, validações, rate limiting e autorização bearer.
 
 **Concluído quando:** contratos e fluxos funcionam manualmente no banco local.
 
 ### 2.6 — Infraestrutura de autenticação no Angular
+
+**Estado:** concluído.
 
 Implementar proxy, cliente HTTP, estado, armazenamento, parser, interceptor, refresh, coordenação entre abas e guardas.
 
@@ -522,15 +534,70 @@ Implementar proxy, cliente HTTP, estado, armazenamento, parser, interceptor, ref
 
 ### 2.7 — Telas
 
+**Estado:** concluído.
+
 Implementar login, cadastro e `/app` com formulários reativos, feedback, loading, erros por campo e responsividade.
 
 **Concluído quando:** fluxo completo pode ser utilizado em celular e desktop.
 
 ### 2.8 — Validação e documentação
 
+**Estado:** concluído.
+
 Executar builds, testes, roteiro manual, revisão de segurança e atualização documental.
 
 **Concluído quando:** todos os critérios aprovados passam e pendências ficam registradas.
+
+## Registro da implementação — 12 de setembro de 2026
+
+Implementado:
+
+- `Result`, `Result<T>`, tipos de erro e mapeamento para `ProblemDetails`;
+- handler global baseado em `IExceptionHandler`, sem exposição de detalhes internos;
+- Identity Core sem roles, `LocalScoreDbContext`, PostgreSQL/Npgsql e mapeamentos em `snake_case`;
+- refresh tokens com hash SHA-256, rotação, famílias, detecção de reutilização, múltiplas sessões, logout da família atual e limpeza oportunística;
+- migration `InitialAuthentication`, contendo somente `users`, `user_claims`, `user_logins`, `user_tokens` e `refresh_tokens`;
+- emissão e validação de JWT, cookie HttpOnly e os cinco endpoints aprovados;
+- rate limiting em memória para cadastro, login e refresh;
+- estado Angular com Signals, parser de expiração, interceptor, guards, renovação coordenada e proxy de desenvolvimento;
+- páginas responsivas pública, de cadastro, login e área autenticada;
+- testes unitários backend sem banco e testes Angular de parser, formulários e interceptor;
+- documentação da stack, execução, endpoints e verificações no `README.md`; instruções temporárias de configuração foram removidas após a validação local.
+
+Validações concluídas:
+
+- solution backend compilada sem erros ou avisos;
+- 11 testes backend aprovados;
+- build de produção Angular aprovado;
+- 9 testes Angular aprovados;
+- API inicializada com configuração temporária sem acesso ao banco;
+- `/health` retornou `200` e `/auth/me` anônimo retornou `401` em `ProblemDetails`;
+- request de cadastro vazio retornou `400` com erros por campo;
+- a sexta tentativa de cadastro no mesmo minuto retornou `429` com `rate_limit_exceeded`.
+
+## Validação final — 19 de setembro de 2026
+
+- User Secrets de desenvolvimento configurados sem versionar a connection string ou a chave JWT;
+- migration `20260912175218_InitialAuthentication` confirmada no histórico do PostgreSQL;
+- tabelas de autenticação criadas no database `localscore`, conforme inspeção do usuário;
+- cadastro com login automático e cookie seguro validado;
+- e-mail duplicado retornou `409 Conflict`;
+- credenciais inválidas retornaram `401 Unauthorized` sem revelar a existência da conta;
+- cinco falhas consecutivas bloquearam a conta, inclusive para uma senha posteriormente correta;
+- `/me` autenticado retornou o usuário esperado;
+- refresh rotacionou o token e invalidou o token anterior;
+- reutilização do token anterior revogou a família correspondente;
+- uma segunda família permaneceu válida após a revogação da primeira;
+- logout revogou a sessão atual, removeu sua capacidade de refresh e permaneceu idempotente;
+- access token já emitido continuou válido até sua expiração, conforme a decisão arquitetural;
+- atributos `HttpOnly`, `Secure`, `SameSite=Strict` e `Path=/api/v1/auth` foram confirmados no cookie;
+- rate limiting havia sido validado anteriormente com retorno `429` e código `rate_limit_exceeded`;
+- 11 testes backend e 9 testes Angular passaram novamente;
+- solution backend e build de produção Angular concluíram com sucesso;
+- telas públicas, login, cadastro e área autenticada foram revisadas durante a validação da etapa;
+- os testes finais criaram duas contas claramente identificadas como dados de teste e não limparam nem recriaram o database compartilhado.
+
+Com essas verificações, todos os critérios aprovados para a etapa 2 foram atendidos.
 
 ## Dependências
 

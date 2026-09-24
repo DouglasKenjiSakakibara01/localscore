@@ -1,0 +1,27 @@
+<main class="dashboard-page">
+  <nav class="topbar">
+    <a class="brand" href="/app">LocalScore</a>
+    <button class="button button--ghost" type="button" (click)="authService.logout()">
+      Sair
+    </button>
+  </nav>
+
+  <section class="dashboard-card">
+    <span class="eyebrow">Área autenticada</span>
+    <h1>Olá, {{ authService.user()?.name }}!</h1>
+    <dl>
+      <div>
+        <dt>Nome</dt>
+        <dd>{{ authService.user()?.name }}</dd>
+      </div>
+      <div>
+        <dt>E-mail</dt>
+        <dd>{{ authService.user()?.email }}</dd>
+      </div>
+      <div>
+        <dt>Sessão</dt>
+        <dd>Autenticada</dd>
+      </div>
+    </dl>
+  </section>
+</main>

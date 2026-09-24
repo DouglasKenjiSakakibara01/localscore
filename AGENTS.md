@@ -40,7 +40,7 @@ Mantenha as dependências apontando para dentro. EF Core, ASP.NET Core e detalhe
 ## Restrições atuais
 
 - A etapa 1 está concluída.
-- A etapa 2 está documentada e ainda não foi implementada.
+- A etapa 2 está concluída e validada com o PostgreSQL local.
 - Não adicione Docker ou Testcontainers sem nova autorização do usuário.
 - Não crie commits, branches, remotes ou pull requests sem solicitação.
 - Preserve alterações existentes do usuário e não reverta arquivos fora do escopo.
