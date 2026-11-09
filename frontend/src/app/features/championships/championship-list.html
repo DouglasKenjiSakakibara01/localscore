@@ -1,0 +1,99 @@
+<main class="page-shell">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Administração</span>
+      <h1>Campeonatos</h1>
+      <p>Organize suas competições e participantes.</p>
+    </div>
+    <a
+      class="button button--primary"
+      routerLink="/app/championships/new"
+    >
+      Novo campeonato
+    </a>
+  </header>
+
+  @if (error()) {
+    <div class="alert">
+      {{ error() }}
+      <button type="button" (click)="load()">Tentar novamente</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="state-card">Carregando campeonatos…</div>
+  } @else if (championships().length === 0) {
+    <div class="state-card">
+      <h2>Seu primeiro campeonato começa aqui</h2>
+      <p>Crie um rascunho e publique quando estiver pronto.</p>
+    </div>
+  } @else {
+    <div class="table-wrap desktop-list">
+      <table>
+        <thead>
+          <tr>
+            <th>Campeonato</th>
+            <th>Status</th>
+            <th>Período</th>
+            <th>Atualizado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of championships(); track item.id) {
+            <tr>
+              <td>
+                <strong>{{ item.name }}</strong>
+                <small>/{{ item.slug }}</small>
+              </td>
+              <td>
+                <span class="status status--{{ item.status.code }}">
+                  {{ item.status.description }}
+                </span>
+              </td>
+              <td>
+                {{
+                  item.startDate
+                    ? (item.startDate | date: 'dd/MM/yyyy' : 'UTC')
+                    : 'Não informado'
+                }}
+                @if (item.endDate) {
+                  — {{ item.endDate | date: 'dd/MM/yyyy' : 'UTC' }}
+                }
+              </td>
+              <td>{{ item.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <a
+                  class="text-link"
+                  [routerLink]="['/app/championships', item.id]"
+                >
+                  Abrir
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-list">
+      @for (item of championships(); track item.id) {
+        <article class="list-card">
+          <div>
+            <span class="status status--{{ item.status.code }}">
+              {{ item.status.description }}
+            </span>
+            <h2>{{ item.name }}</h2>
+            <p>/{{ item.slug }}</p>
+          </div>
+          <a
+            class="button button--ghost"
+            [routerLink]="['/app/championships', item.id]"
+          >
+            Abrir
+          </a>
+        </article>
+      }
+    </div>
+  }
+</main>

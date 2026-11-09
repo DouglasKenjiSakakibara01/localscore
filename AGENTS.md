@@ -47,6 +47,10 @@ Mantenha as dependências apontando para dentro. EF Core, ASP.NET Core e detalhe
 
 ## Convenções de implementação
 
+- Em arquivos TypeScript, não compacte decorators, métodos, callbacks, handlers ou objetos com lógica em uma única linha; distribua-os em múltiplas linhas com indentação consistente.
+- Separe com linhas em branco os blocos lógicos que ajudem a leitura, como dependências injetadas, estado, ciclo de vida, ações públicas e métodos auxiliares. Declarações simples e diretamente relacionadas podem permanecer agrupadas.
+- Em templates HTML, não coloque várias tags estruturais ou aninhadas na mesma linha. Use uma linha por elemento, preserve a indentação da hierarquia e escreva blocos de controle Angular (`@if`, `@else` e `@for`) em múltiplas linhas.
+- Textos curtos podem permanecer na mesma linha entre a abertura e o fechamento de uma tag simples, desde que essa linha não contenha outras tags e continue legível.
 - Não exponha entidades de domínio diretamente pela API; use DTOs.
 - Use `Result`/`Result<T>` para falhas esperadas nos limites dos casos de uso.
 - Retorne DTOs diretamente em sucessos HTTP; não crie envelope universal `ApiResponse<T>`.

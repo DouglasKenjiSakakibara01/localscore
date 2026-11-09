@@ -1,0 +1,102 @@
+<main class="page-shell page-shell--narrow">
+  <a class="back-link" [routerLink]="returnUrl">← Voltar</a>
+
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Equipe</span>
+      <h1>{{ id ? 'Editar equipe' : 'Nova equipe' }}</h1>
+      <p>Somente o nome completo é obrigatório.</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state-card">Carregando…</div>
+  } @else {
+    <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
+      <label>
+        Nome completo
+        <input formControlName="name" maxlength="100" />
+      </label>
+
+      <div class="form-grid">
+        <label>
+          Nome curto
+          <input formControlName="shortName" maxlength="30" />
+        </label>
+        <label>
+          Sigla
+          <input formControlName="acronym" maxlength="10" />
+        </label>
+      </div>
+
+      <label>
+        Cidade
+        <input formControlName="city" maxlength="100" />
+      </label>
+
+      <div class="form-grid">
+        <div class="color-field">
+          <span>Cor principal</span>
+
+          @if (form.controls.primaryColor.value) {
+            <input type="color" formControlName="primaryColor" />
+            <button
+              type="button"
+              class="text-link button-link"
+              (click)="clearColor('primaryColor')"
+            >
+              Remover
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="button button--ghost"
+              (click)="addColor('primaryColor')"
+            >
+              Adicionar cor
+            </button>
+          }
+        </div>
+
+        <div class="color-field">
+          <span>Cor secundária</span>
+
+          @if (form.controls.secondaryColor.value) {
+            <input type="color" formControlName="secondaryColor" />
+            <button
+              type="button"
+              class="text-link button-link"
+              (click)="clearColor('secondaryColor')"
+            >
+              Remover
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="button button--ghost"
+              [disabled]="!form.controls.primaryColor.value"
+              (click)="addColor('secondaryColor')"
+            >
+              Adicionar cor
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a class="button button--ghost" [routerLink]="returnUrl">Cancelar</a>
+        <button
+          class="button button--primary"
+          type="submit"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Salvando…' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+  }
+</main>

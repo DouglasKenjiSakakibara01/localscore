@@ -22,6 +22,217 @@ namespace LocalScore.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("LocalScore.Domain.Championships.Championship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("slug");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_code");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_championships");
+
+                    b.HasIndex("OwnerUserId")
+                        .HasDatabaseName("ix_championships_owner_user_id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_championships_slug");
+
+                    b.HasIndex("StatusCode")
+                        .HasDatabaseName("ix_championships_status_code");
+
+                    b.ToTable("championships", (string)null);
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.ChampionshipStatus", b =>
+                {
+                    b.Property<int>("Code")
+                        .HasColumnType("integer")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("description");
+
+                    b.HasKey("Code")
+                        .HasName("pk_championship_statuses");
+
+                    b.ToTable("championship_statuses", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = 1,
+                            Description = "Rascunho"
+                        },
+                        new
+                        {
+                            Code = 2,
+                            Description = "Publicado"
+                        },
+                        new
+                        {
+                            Code = 3,
+                            Description = "Finalizado"
+                        });
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.ChampionshipTeam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ChampionshipId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("championship_id");
+
+                    b.Property<DateTimeOffset>("RegisteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("registered_at");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("removed_at");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("team_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_championship_teams");
+
+                    b.HasIndex("ChampionshipId")
+                        .HasDatabaseName("ix_championship_teams_championship_id");
+
+                    b.HasIndex("TeamId")
+                        .HasDatabaseName("ix_championship_teams_team_id");
+
+                    b.HasIndex("ChampionshipId", "TeamId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_championship_teams_championship_id_team_id");
+
+                    b.ToTable("championship_teams", (string)null);
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.Team", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Acronym")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("acronym");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("city");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("primary_color");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("secondary_color");
+
+                    b.Property<string>("ShortName")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("short_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_teams");
+
+                    b.HasIndex("OwnerUserId")
+                        .HasDatabaseName("ix_teams_owner_user_id");
+
+                    b.HasIndex("OwnerUserId", "NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_teams_owner_user_id_normalized_name");
+
+                    b.ToTable("teams", (string)null);
+                });
+
             modelBuilder.Entity("LocalScore.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -266,6 +477,54 @@ namespace LocalScore.Infrastructure.Persistence.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("LocalScore.Domain.Championships.Championship", b =>
+                {
+                    b.HasOne("LocalScore.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_championships_users_owner_user_id");
+
+                    b.HasOne("LocalScore.Domain.Championships.ChampionshipStatus", null)
+                        .WithMany()
+                        .HasForeignKey("StatusCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_championships_championship_statuses_status_code");
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.ChampionshipTeam", b =>
+                {
+                    b.HasOne("LocalScore.Domain.Championships.Championship", "Championship")
+                        .WithMany("Teams")
+                        .HasForeignKey("ChampionshipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_championship_teams_championships_championship_id");
+
+                    b.HasOne("LocalScore.Domain.Championships.Team", "Team")
+                        .WithMany("Championships")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_championship_teams_teams_team_id");
+
+                    b.Navigation("Championship");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.Team", b =>
+                {
+                    b.HasOne("LocalScore.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_teams_users_owner_user_id");
+                });
+
             modelBuilder.Entity("LocalScore.Infrastructure.Identity.RefreshToken", b =>
                 {
                     b.HasOne("LocalScore.Infrastructure.Identity.RefreshToken", "ReplacedByToken")
@@ -314,6 +573,16 @@ namespace LocalScore.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.Championship", b =>
+                {
+                    b.Navigation("Teams");
+                });
+
+            modelBuilder.Entity("LocalScore.Domain.Championships.Team", b =>
+                {
+                    b.Navigation("Championships");
                 });
 
             modelBuilder.Entity("LocalScore.Infrastructure.Identity.ApplicationUser", b =>

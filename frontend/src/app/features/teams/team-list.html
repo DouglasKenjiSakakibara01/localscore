@@ -1,0 +1,59 @@
+<main class="page-shell">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Catálogo</span>
+      <h1>Equipes</h1>
+      <p>Cadastros reutilizáveis nos seus campeonatos.</p>
+    </div>
+    <a class="button button--primary" routerLink="/app/teams/new">
+      Nova equipe
+    </a>
+  </header>
+
+  @if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state-card">Carregando…</div>
+  } @else if (teams().length === 0) {
+    <div class="state-card">
+      <h2>Nenhuma equipe cadastrada</h2>
+      <p>Cadastre uma equipe para começar.</p>
+    </div>
+  } @else {
+    <div class="card-grid">
+      @for (team of teams(); track team.id) {
+        <article class="team-card">
+          <span
+            class="team-mark"
+            [style.background]="team.primaryColor || '#d8e3dc'"
+          >
+            {{ team.acronym || team.name.slice(0, 2).toUpperCase() }}
+          </span>
+          <div class="team-card__body">
+            <h2>{{ team.name }}</h2>
+            <p>
+              {{ team.shortName || team.city || 'Sem informações adicionais' }}
+            </p>
+          </div>
+          <div class="action-row">
+            <a
+              class="button button--ghost"
+              [routerLink]="['/app/teams', team.id, 'edit']"
+            >
+              Editar
+            </a>
+            <button
+              class="button button--danger"
+              type="button"
+              (click)="remove(team)"
+            >
+              Excluir
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</main>

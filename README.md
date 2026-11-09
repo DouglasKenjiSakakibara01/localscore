@@ -80,6 +80,38 @@ GET  /api/v1/auth/me
 
 The access token is stored in the browser's `localStorage`. The raw refresh token is only sent through the secure, HttpOnly `LocalScore.RefreshToken` cookie.
 
+## Championship and team endpoints
+
+Authenticated administration:
+
+```text
+GET    /api/v1/championships
+POST   /api/v1/championships
+GET    /api/v1/championships/{championshipId}
+PUT    /api/v1/championships/{championshipId}
+DELETE /api/v1/championships/{championshipId}
+POST   /api/v1/championships/{championshipId}/publish
+POST   /api/v1/championships/{championshipId}/return-to-draft
+POST   /api/v1/championships/{championshipId}/finish
+POST   /api/v1/championships/{championshipId}/reopen
+GET    /api/v1/teams
+POST   /api/v1/teams
+GET    /api/v1/teams/{teamId}
+PUT    /api/v1/teams/{teamId}
+DELETE /api/v1/teams/{teamId}
+GET    /api/v1/championships/{championshipId}/teams
+PUT    /api/v1/championships/{championshipId}/teams/{teamId}
+DELETE /api/v1/championships/{championshipId}/teams/{teamId}
+```
+
+Public access:
+
+```text
+GET /api/v1/public/championships/{slug}
+```
+
+The Angular application exposes the administrative area under `/app`, including championship and reusable team management, and the public page at `/championships/:slug`.
+
 ## Verification
 
 Backend build and unit tests:

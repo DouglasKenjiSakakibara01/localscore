@@ -1,0 +1,7 @@
+:host { display: block; min-height: 100vh; }
+.app-header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.app-header__inner { align-items: center; display: flex; gap: 1.5rem; margin: auto; max-width: 78rem; padding: 1rem 1.5rem; }
+nav { display: flex; flex: 1; gap: .35rem; }
+nav a { border-radius: .55rem; color: var(--color-text-muted); font-weight: 700; padding: .6rem .8rem; text-decoration: none; }
+nav a.active { background: #e6f4ec; color: var(--color-primary-dark); }
+@media (max-width: 42rem) { .app-header__inner { align-items: stretch; flex-wrap: wrap; } nav { order: 3; width: 100%; } }

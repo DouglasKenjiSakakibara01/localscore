@@ -1,0 +1,130 @@
+<main class="page-shell">
+  <a class="back-link" [routerLink]="['/app/championships', id]">
+    ← Visão geral
+  </a>
+
+  @if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state-card">Carregando…</div>
+  } @else if (championship(); as item) {
+    <header class="detail-header">
+      <div>
+        <span class="status status--{{ item.status.code }}">
+          {{ item.status.description }}
+        </span>
+        <h1>{{ item.name }}</h1>
+        <p>Gerenciamento de participantes</p>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <a [routerLink]="['/app/championships', id]">Visão geral</a>
+      <a
+        class="active"
+        [routerLink]="['/app/championships', id, 'teams']"
+      >
+        Equipes
+      </a>
+    </nav>
+
+    @if (item.status.code !== 3) {
+      <section class="panel participant-picker">
+        <div>
+          <h2>Adicionar equipe</h2>
+          <p>Selecione uma equipe do seu catálogo.</p>
+        </div>
+
+        <select [value]="selectedTeamId()" (change)="select($event)">
+          <option value="">Selecione…</option>
+          @for (team of availableTeams(); track team.id) {
+            <option [value]="team.id">{{ team.name }}</option>
+          }
+        </select>
+
+        <button
+          class="button button--primary"
+          type="button"
+          [disabled]="!selectedTeamId() || working()"
+          (click)="activate()"
+        >
+          Adicionar
+        </button>
+        <a
+          class="text-link"
+          [routerLink]="['/app/teams/new']"
+          [queryParams]="{
+            returnUrl: '/app/championships/' + id + '/teams',
+          }"
+        >
+          Cadastrar nova equipe
+        </a>
+      </section>
+    }
+
+    <section>
+      <h2>Participantes ativos</h2>
+      <div class="card-grid">
+        @for (entry of activeParticipants(); track entry.id) {
+          <article class="team-card">
+            <span
+              class="team-mark"
+              [style.background]="entry.team.primaryColor || '#d8e3dc'"
+            >
+              {{
+                entry.team.acronym ||
+                  entry.team.name.slice(0, 2).toUpperCase()
+              }}
+            </span>
+            <div>
+              <h3>{{ entry.team.name }}</h3>
+              <p>{{ entry.team.city || 'Cidade não informada' }}</p>
+            </div>
+
+            @if (item.status.code !== 3) {
+              <button
+                class="button button--ghost"
+                [disabled]="working()"
+                (click)="remove(entry.team.id)"
+              >
+                Remover
+              </button>
+            }
+          </article>
+        }
+
+        @if (activeParticipants().length === 0) {
+          <div class="state-card">Nenhuma equipe participante.</div>
+        }
+      </div>
+    </section>
+
+    @if (removedParticipants().length > 0) {
+      <section>
+        <h2>Removidas</h2>
+        <div class="card-grid">
+          @for (entry of removedParticipants(); track entry.id) {
+            <article class="team-card team-card--muted">
+              <div>
+                <h3>{{ entry.team.name }}</h3>
+                <p>Participação removida</p>
+              </div>
+
+              @if (item.status.code !== 3) {
+                <button
+                  class="button button--ghost"
+                  [disabled]="working()"
+                  (click)="activate(entry.team.id)"
+                >
+                  Reinscrever
+                </button>
+              }
+            </article>
+          }
+        </div>
+      </section>
+    }
+  }
+</main>

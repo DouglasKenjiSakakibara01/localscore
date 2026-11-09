@@ -16,7 +16,7 @@ Este é o ponto de referência para o escopo, a ordem de implementação, as dec
 |---|---|---|
 | 1 | Fundação do projeto | Concluída |
 | 2 | Contas e autenticação | Concluída |
-| 3 | Campeonatos e equipes | Planejada; requer refinamento |
+| 3 | Campeonatos e equipes | Concluída |
 | 4 | Jogadores e inscrições | Planejada; requer refinamento |
 | 5 | Rodadas e partidas | Planejada; requer refinamento |
 | 6 | Eventos manuais da partida | Planejada; requer refinamento |
@@ -614,70 +614,498 @@ Um usuário consegue se cadastrar, entrar automaticamente, recarregar a aplicaç
 
 # Etapa 3 — Campeonatos e equipes
 
-**Estado:** planejada; requer refinamento antes da implementação.
+**Estado:** concluída.
 
 ## Objetivo
 
-Permitir que um usuário autenticado crie e administre seus campeonatos e equipes participantes.
+Permitir que um usuário autenticado crie e administre seus próprios campeonatos, mantenha as equipes sob sua responsabilidade e controle quais delas participam de cada campeonato. Disponibilizar a primeira consulta pública de um campeonato quando ele atender às regras de publicação aprovadas.
 
-## Funcionalidades previstas
+A etapa deve estabelecer uma base consistente para jogadores, rodadas, partidas e estatísticas, sem antecipar essas funcionalidades.
 
-- CRUD de campeonato;
+## Escopo aprovado
+
+### Incluído
+
+- criação, consulta, edição e tratamento de exclusão de campeonatos;
 - vínculo obrigatório entre campeonato e proprietário;
-- estados do campeonato;
-- publicação e consulta pública conforme status;
-- CRUD de equipes;
-- inscrição e remoção controlada de equipes no campeonato.
+- ciclo de vida e publicação do campeonato;
+- criação, consulta, edição e tratamento de exclusão de equipes;
+- inscrição, listagem e remoção controlada de equipes participantes;
+- painel administrativo com os campeonatos do usuário;
+- detalhe administrativo do campeonato e gerenciamento de participantes;
+- página pública inicial com dados básicos e equipes participantes;
+- autorização por proprietário em todas as operações administrativas;
+- migration própria e testes das regras aprovadas.
 
-## Frontend
+### Fora da etapa
 
-- painel dos campeonatos do usuário;
-- formulários de campeonato e equipe;
-- lista de participantes;
-- página pública inicial do campeonato.
+- jogadores e elencos, reservados para a etapa 4;
+- rodadas, partidas, placares e agenda, reservados para a etapa 5;
+- eventos, classificação e artilharia;
+- compartilhamento de administração, convites, organizações ou roles por campeonato;
+- escudos, capas e uploads;
+- fases, grupos, mata-mata, geração de confrontos ou regulamentos configuráveis;
+- importação, exportação e clonagem;
+- área pública completa de descoberta, que permanece na etapa 7.
 
-## Backend
+## Decisões já aprovadas
 
-- controllers e casos de uso;
-- autorização por `owner_user_id`;
-- validações de status e duplicidade;
-- DTOs públicos e administrativos separados quando necessário.
+- somente usuários autenticados criam e administram campeonatos e equipes;
+- cada usuário administra somente os campeonatos que criou;
+- cada equipe pertence a um usuário e pode ser reutilizada em vários campeonatos desse mesmo proprietário;
+- equipes não são compartilhadas entre usuários;
+- todo campeonato possui `owner_user_id` imutável;
+- campeonato possui nome, slug, status, descrição opcional e datas inicial e final opcionais;
+- datas inicial e final representam dias planejados, sem horário ou fuso, e a data final não pode anteceder a inicial;
+- campeonato não possui campo de localidade geral nesta etapa;
+- equipe possui nome, nome curto, sigla, cidade, cor principal e cor secundária;
+- o ciclo do campeonato possui somente os status `Draft`, `Published` e `Finished`;
+- os códigos são `1 = Draft`, `2 = Published` e `3 = Finished` e não podem ser reutilizados com outro significado;
+- `Published` representa todo o período em que o campeonato está público e ativo;
+- não haverá status `InProgress`, `Cancelled` ou `Archived` nesta etapa;
+- as transições permitidas são `Draft → Published`, `Published → Draft`, `Published → Finished` e `Finished → Published`;
+- `Published → Draft` será bloqueada quando existirem rodadas ou partidas;
+- não existem transições diretas entre `Draft` e `Finished`;
+- retornos de status exigem confirmação na interface;
+- publicar exige nome e slug válidos e, quando informadas, datas coerentes;
+- publicação não exige quantidade mínima de equipes;
+- a visibilidade pública é determinada pelo status, sem campo `is_public` separado;
+- `Draft` é privado; `Published` e `Finished` são públicos;
+- o slug é globalmente único, gerado do nome em ASCII minúsculo com hífens e pode ser ajustado manualmente em `Draft` antes da primeira publicação;
+- colisões de slug gerado recebem sufixo numérico crescente, como `copa-do-bairro-2`;
+- uma constraint única no banco é a garantia final contra colisões concorrentes;
+- depois da primeira publicação, o slug é imutável mesmo que o nome do campeonato seja alterado;
+- nomes de campeonato podem se repetir;
+- nomes de equipe são únicos por proprietário, ignorando maiúsculas, minúsculas e espaços externos;
+- remover uma equipe do campeonato preenche `championship_teams.removed_at` sem apagar o vínculo;
+- reinscrever a mesma equipe reativa o vínculo existente, preservando seu identificador;
+- equipes removidas não aparecem na lista pública atual, permanecem visíveis na administração e continuam disponíveis em registros históricos que as referenciem;
+- campeonato só pode ser excluído fisicamente quando estiver em `Draft` e não possuir qualquer vínculo de participação ou outra dependência;
+- equipe só pode ser excluída fisicamente quando nunca tiver sido inscrita em campeonato;
+- não haverá soft delete nem arquivamento nesta etapa;
+- campeonato não possui limite máximo de equipes no MVP;
+- participantes podem ser adicionados ou removidos em `Draft` e `Published`;
+- em `Finished`, participantes não podem ser alterados sem reabrir o campeonato;
+- a etapa 5 definirá o bloqueio necessário para remover equipes envolvidas em partidas pendentes;
+- participantes são ordenados por nome, ignorando maiúsculas e acentos; `registered_at` não determina a ordem padrão;
+- recurso administrativo inexistente ou pertencente a outro usuário retorna igualmente `404 Not Found`;
+- edições usam a política de última gravação válida; não haverá token de concorrência otimista nesta etapa;
+- `updated_at` é informativo e não funciona como versão de concorrência;
+- listas administrativas não são paginadas nesta etapa e possuem ordenação determinística;
+- campeonatos são ordenados por `updated_at` decrescente, depois por nome e UUID;
+- catálogo de equipes é ordenado alfabeticamente pelo nome, ignorando maiúsculas e acentos, com UUID como desempate;
+- o detalhe público inicial agrega os dados do campeonato e a lista de participantes ativos em uma única resposta;
+- somente o nome completo da equipe é obrigatório;
+- nome curto, sigla, cidade, cor principal e cor secundária são opcionais;
+- na ausência de nome curto, a interface usa o nome completo; na ausência de sigla ou cores, usa apresentação neutra;
+- nome do campeonato possui de 3 a 120 caracteres, descrição opcional até 1.000 e slug de 3 a 100;
+- espaços externos são removidos antes da validação e descrição vazia é tratada como ausência;
+- nome da equipe possui de 2 a 100 caracteres; nome curto de 2 a 30; sigla de 2 a 10; cidade de 2 a 100;
+- espaços externos são removidos dos campos de equipe e valores opcionais vazios são tratados como ausência;
+- sigla aceita somente letras `A-Z` e números e é normalizada para maiúsculas;
+- cores usam `#RRGGBB` em maiúsculas e a cor secundária exige uma cor principal;
+- `teams.normalized_name` armazena o nome sem espaços externos e em maiúsculas invariantes;
+- índice único em `(owner_user_id, normalized_name)` garante a unicidade do nome da equipe;
+- mudanças de status usam comandos `publish`, `return-to-draft`, `finish` e `reopen`;
+- o endpoint comum de edição não aceita alteração direta de `status_code`;
+- edições de campeonato e equipe usam `PUT` com todos os campos editáveis;
+- contratos de edição não aceitam proprietário, status ou campos técnicos;
+- em `Draft`, todos os campos editáveis do campeonato podem ser alterados;
+- em `Published`, nome, descrição e datas podem ser alterados, mas o slug permanece bloqueado;
+- em `Finished`, o campeonato é somente leitura até ser reaberto;
+- equipes podem ser editadas a qualquer momento, e suas alterações refletem em todos os campeonatos que as utilizam;
+- o MVP não mantém versões históricas dos dados cadastrais da equipe;
+- equipes são mantidas em catálogo próprio em `/app/teams`;
+- o gerenciamento de participantes seleciona equipes existentes e redireciona ao cadastro quando necessário, retornando ao campeonato após salvar;
+- listas administrativas usam tabela no desktop e cartões empilhados no celular, com as mesmas informações e ações essenciais;
+- a rota pública do Angular é `/championships/:slug`, fora de `/app` e sem autenticação;
+- o detalhe administrativo permanece em `/app/championships/:id`, protegido e identificado por UUID;
+- o DTO público do campeonato contém nome, slug, status com código e descrição, descrição e datas;
+- equipes ativas no DTO público contêm ID, nome, nome curto, sigla, cidade e cores;
+- o contrato público não expõe proprietário, nome normalizado, datas técnicas ou participações removidas;
+- o detalhe administrativo possui cabeçalho com nome, status e ações válidas;
+- `/app/championships/:id` exibe a visão geral e `/app/championships/:id/teams` gerencia participantes ativos e removidos;
+- a página pública exibe cabeçalho com nome e status, descrição e período quando informados e lista responsiva de equipes ativas;
+- página pública sem participantes exibe estado vazio; slug inexistente ou campeonato em `Draft` retorna página `404`;
+- a página pública não exibe ações administrativas;
+- inscrição usa `PUT /championships/{championshipId}/teams/{teamId}` de forma idempotente;
+- remoção usa `DELETE` no mesmo recurso, preenchendo `removed_at` de forma idempotente;
+- primeira inscrição retorna `201 Created`; reinscrição ou vínculo já ativo retorna `200 OK`; remoção retorna `204 No Content`;
+- `championship_teams` possui `id` UUID próprio para referências das etapas seguintes;
+- reinscrição atualiza `registered_at` para o novo momento e limpa `removed_at`;
+- status usa tabela de referência própria, código inteiro estável e enum C# com os mesmos valores;
+- códigos e descrições dos status são controlados por migration, sem CRUD administrativo;
+- campeonato em rascunho não é público;
+- entidades de domínio não são expostas diretamente pela API;
+- DTOs administrativos e públicos podem ser diferentes;
+- entidades principais usam UUID;
+- instantes técnicos são armazenados em UTC;
+- imagens permanecem fora do MVP;
+- relacionamentos com futuro histórico não usam cascatas amplas.
 
-## Banco de dados
+## Modelo funcional aprovado
+
+### Campeonato
+
+| Campo | Finalidade | Situação |
+|---|---|---|
+| `id` | Identificador UUID | definido |
+| `owner_user_id` | Proprietário e limite de autorização | definido |
+| `status_code` | Estado atual, com códigos `1`, `2` e `3` | definido |
+| `name` | Nome exibido, de 3 a 120 caracteres | definido |
+| `slug` | Identificador da URL pública, de 3 a 100 caracteres | definido |
+| `published_at` | Primeira publicação em UTC e bloqueio permanente do slug | definido |
+| `description` | Apresentação opcional de até 1.000 caracteres | definido |
+| `start_date` | Data planejada e opcional de início | definido |
+| `end_date` | Data planejada e opcional de término | definido |
+| `created_at` | Criação em UTC | definido |
+| `updated_at` | Última alteração em UTC | definido |
+
+Datas de planejamento usam somente data e não representam um instante. Se ambas forem informadas, a data final não pode anteceder a inicial. Não haverá localidade geral nesta etapa.
+
+### Equipe
+
+| Campo | Finalidade | Situação |
+|---|---|---|
+| `id` | Identificador UUID | definido |
+| `owner_user_id` | Proprietário e limite de autorização | definido |
+| `name` | Nome completo, de 2 a 100 caracteres | definido |
+| `short_name` | Nome curto opcional, de 2 a 30 caracteres | definido |
+| `acronym` | Sigla opcional, de 2 a 10 caracteres, com `A-Z` e números | definido |
+| `city` | Cidade opcional, de 2 a 100 caracteres | definido |
+| `primary_color` | Cor principal opcional em `#RRGGBB` | definido |
+| `secondary_color` | Cor secundária opcional em `#RRGGBB`, dependente da principal | definido |
+| `created_at` | Criação em UTC | definido |
+| `updated_at` | Última alteração em UTC | definido |
+
+Somente o nome completo é obrigatório. Espaços externos são removidos e campos opcionais vazios são tratados como ausência. A sigla aceita somente letras `A-Z` e números e é normalizada para maiúsculas. Cores usam `#RRGGBB` em maiúsculas e a secundária exige uma principal. Na ausência de nome curto, a interface usa o nome completo; sem sigla ou cores, usa apresentação neutra. Escudo continua fora do MVP.
+
+### Participação no campeonato
+
+`championship_teams` representa uma inscrição, não apenas um detalhe técnico de muitos-para-muitos. As etapas seguintes poderão referenciar a equipe dentro de um campeonato por esse vínculo.
+
+| Campo | Finalidade | Situação |
+|---|---|---|
+| `id` | UUID da participação | definido |
+| `championship_id` | Campeonato | definido |
+| `team_id` | Equipe | definido |
+| `registered_at` | Momento UTC da ativação mais recente | definido |
+| `removed_at` | Momento UTC da remoção lógica | definido |
+
+`registered_at` representa a ativação mais recente. Na reinscrição ele é atualizado e `removed_at` é limpo; a data da primeira inscrição não é preservada no MVP. Duas participações ativas da mesma equipe no mesmo campeonato são impedidas.
+
+## Ciclo de vida aprovado
+
+O status controla operações administrativas e visibilidade pública, mas não substitui regras independentes de integridade. O fluxo aprovado usa `Draft`, `Published` e `Finished`, com códigos e transições descritos nesta etapa. `Draft` é privado; os demais são públicos. Não há cancelamento nem arquivamento. Campeonato finalizado precisa ser reaberto antes de novas alterações administrativas. Restrições relacionadas a partidas serão complementadas na etapa 5.
+
+## Autorização e exposição
+
+### Administração
+
+- o usuário vem da identidade autenticada, nunca de `owner_user_id` enviado pelo cliente;
+- coleções retornam somente recursos administráveis pelo usuário atual;
+- alterar campeonato exige ser seu proprietário;
+- inscrever uma equipe exige que o usuário seja proprietário do campeonato e da equipe;
+- o backend valida autorização mesmo que o Angular oculte a ação;
+- um ID inexistente ou pertencente a outro usuário retorna igualmente `404 Not Found`.
+
+### Consulta pública
+
+- não exige autenticação;
+- localiza campeonato por slug;
+- retorna somente status públicos;
+- não expõe `owner_user_id`, e-mail ou outros dados da conta;
+- contém nome, slug, status com código e descrição, descrição e datas do campeonato;
+- contém ID, nome, nome curto, sigla, cidade e cores das equipes ativas;
+- não contém nomes normalizados, datas técnicas ou participações removidas;
+- rascunho e slug inexistente são indistinguíveis para visitantes;
+- descoberta e listagem pública ampla continuam na etapa 7, salvo decisão posterior.
+
+## Contratos HTTP aprovados
+
+```text
+GET    /api/v1/championships
+POST   /api/v1/championships
+GET    /api/v1/championships/{championshipId}
+PUT    /api/v1/championships/{championshipId}
+DELETE /api/v1/championships/{championshipId}
+```
+
+Mudanças de ciclo de vida usam comandos explícitos:
+
+```text
+POST /api/v1/championships/{championshipId}/publish
+POST /api/v1/championships/{championshipId}/return-to-draft
+POST /api/v1/championships/{championshipId}/finish
+POST /api/v1/championships/{championshipId}/reopen
+```
+
+O endpoint comum de edição não aceita alteração direta de `status_code` nem pode ignorar as transições de domínio.
+
+Equipes possuem uma coleção administrativa própria e reutilizável:
+
+```text
+GET    /api/v1/teams
+POST   /api/v1/teams
+GET    /api/v1/teams/{teamId}
+PUT    /api/v1/teams/{teamId}
+DELETE /api/v1/teams/{teamId}
+GET    /api/v1/championships/{championshipId}/teams
+PUT    /api/v1/championships/{championshipId}/teams/{teamId}
+DELETE /api/v1/championships/{championshipId}/teams/{teamId}
+```
+
+O `PUT` cria ou reativa a participação e não duplica um vínculo já ativo. O `DELETE` preenche `removed_at` e também é idempotente.
+
+A primeira inscrição retorna `201 Created` com o DTO da participação. Reinscrição ou vínculo já ativo retorna `200 OK` com o estado atual. A remoção retorna `204 No Content`, inclusive quando o vínculo já estiver removido.
+
+Consulta pública inicial:
+
+```text
+GET /api/v1/public/championships/{slug}
+```
+
+Esse endpoint agrega os dados básicos do campeonato e seus participantes ativos. Rodadas, partidas e estatísticas terão recursos separados nas etapas correspondentes.
+
+## Respostas e validação
+
+- criação retorna `201 Created` com DTO e localização;
+- sucessos retornam DTOs diretamente;
+- exclusão ou remoção sem corpo retorna `204 No Content`;
+- validação retorna `400` com `ProblemDetails` e erros por campo;
+- conflito de slug, nome ou inscrição retorna `409` quando adequado;
+- recurso inexistente retorna `404`;
+- recurso administrativo inexistente ou de outro proprietário retorna `404`; `403` fica reservado a contextos em que a existência do recurso já seja legitimamente conhecida;
+- falhas esperadas usam `Result`/`Result<T>`;
+- exceptions inesperadas continuam no tratamento global existente.
+
+Os limites, formatos, coerência das datas, unicidade, quantidade de participantes e operações por status estão definidos nesta etapa e devem ser aplicados tanto nos casos de uso quanto nos contratos de entrada aplicáveis.
+
+## Persistência aprovada
+
+Tabelas esperadas:
 
 - `championship_statuses`;
 - `championships`;
 - `teams`;
-- `championship_teams`;
-- índices de proprietário, slug e vínculos;
-- migration própria da etapa.
+- `championship_teams`.
+
+Relacionamentos de proprietário, status e participação usam `Restrict`/`NoAction`. Índices esperados:
+
+- `championships.owner_user_id` e `championships.status_code`;
+- índice único global em `championships.slug`;
+- `teams.owner_user_id`;
+- índice único em `(teams.owner_user_id, teams.normalized_name)`;
+- ambas as FKs de `championship_teams`;
+- índice único em `(championship_teams.championship_id, championship_teams.team_id)`, pois reinscrição reutiliza o mesmo registro.
+
+A aplicação mantém `teams.normalized_name` removendo espaços externos e aplicando maiúsculas invariantes, enquanto `name` preserva a apresentação escolhida pelo usuário. Um índice único em `(owner_user_id, normalized_name)` garante a regra no banco sem depender de `citext`.
+
+A migration da etapa cria apenas tabelas, índices e dados de referência aprovados. Ela deve ser revisada e aplicada explicitamente no PostgreSQL local. Não haverá migration automática nem limpeza do database compartilhado por testes.
+
+## Frontend aprovado
+
+Rotas administrativas:
+
+```text
+/app/championships
+/app/championships/new
+/app/championships/:id
+/app/championships/:id/edit
+/app/championships/:id/teams
+/app/teams
+/app/teams/new
+/app/teams/:id/edit
+/championships/:slug
+```
+
+Haverá `/app/teams` para manter o catálogo reutilizável do usuário. A inscrição continuará dentro do campeonato: o usuário seleciona uma equipe existente ou segue ao cadastro e retorna ao campeonato após salvar. Não haverá formulário duplicado nem modal de criação nesta etapa.
+
+Telas e comportamentos esperados:
+
+- painel com estados de carregamento, vazio, erro e sucesso;
+- formulário de criação e edição;
+- detalhe com resumo, status e ações válidas;
+- cabeçalho compartilhado com nome, status e ações, visão geral na rota principal e equipes em rota própria;
+- seletor de equipe existente, com redirecionamento ao cadastro quando necessário e retorno ao campeonato após salvar;
+- confirmações para ações com consequência relevante;
+- página pública por slug com cabeçalho, descrição e período opcionais, estado vazio e lista responsiva de equipes ativas;
+- página `404` para slug inexistente ou campeonato em `Draft`;
+- validação próxima aos campos, mantendo o backend como autoridade;
+- rotas administrativas protegidas pela autenticação existente.
+
+Listas administrativas usam tabela no desktop e cartões empilhados no celular, preservando informações e ações essenciais.
+
+## Incrementos implementados
+
+A etapa pode ser entregue em incrementos pequenos, somente depois das decisões essenciais:
+
+1. domínio, enums, regras e contratos aprovados;
+2. mapeamentos, contexto e migration revisada;
+3. casos de uso e endpoints administrativos de campeonato;
+4. equipes, participações e testes de integridade;
+5. painel, formulários e gerenciamento no Angular;
+6. publicação, endpoint por slug e página pública inicial;
+7. builds, testes e validação manual com dois usuários.
+
+Os sete incrementos foram entregues dentro da etapa 3, sem antecipar funcionalidades das etapas seguintes.
+
+## Estratégia de validação
+
+### Backend
+
+- testes das transições e regras de publicação aprovadas;
+- proprietário, recurso inexistente e usuário diferente;
+- duplicidade de slug, equipe e participação;
+- remoção, reinscrição e exclusão;
+- projeção pública sem vazamento de dados;
+- conversão das falhas esperadas para `ProblemDetails`;
+- build e testes da solução.
+
+### Frontend
+
+- formulários e mensagens relevantes;
+- serviços HTTP e tratamento de erro;
+- ações disponíveis por status;
+- estados vazio, carregando, erro e sucesso;
+- build de produção e testes em ChromeHeadless.
+
+### Fluxo manual
+
+- usuário A cria e mantém seu campeonato;
+- usuário B não vê nem altera os recursos administrativos de A;
+- proprietário cria ou seleciona equipe e a inscreve;
+- duplicidades e transições inválidas são recusadas;
+- rascunho não é acessível anonimamente;
+- publicado é acessível pelo slug sem dados privados;
+- remoção e exclusão obedecem às regras aprovadas;
+- migration é aplicada sem recriar o database.
+
+## Critérios de conclusão aprovados
+
+- usuário administra somente os próprios campeonatos;
+- ciclo de vida aprovado é imposto pelo domínio e pela API;
+- publicação e URL pública obedecem às regras aprovadas;
+- equipes são mantidas no escopo escolhido;
+- participação ativa duplicada é impedida;
+- remoção não apaga indevidamente dados necessários às próximas etapas;
+- visitante acessa apenas campeonatos públicos;
+- contratos não expõem entidades nem dados privados;
+- migration é revisada e validada no PostgreSQL local;
+- backend e frontend compilam e os testes relacionados passam;
+- decisões aprovadas ficam registradas nesta etapa.
+
+## Decisões consolidadas do refinamento
+
+### 1. Reutilização da equipe — decidido
+
+Cada equipe pertence a um usuário e pode ser reutilizada em vários campeonatos desse mesmo proprietário. Não existe catálogo global compartilhado. Excluir o cadastro da equipe e remover sua participação em um campeonato são operações distintas.
+
+### 2. Campos do campeonato — decidido
+
+O campeonato possui nome de 3 a 120 caracteres, slug de 3 a 100, status, descrição opcional de até 1.000 caracteres e datas inicial e final opcionais. Espaços externos são removidos antes da validação e descrição vazia é tratada como ausência. As datas usam somente data, a data final não pode anteceder a inicial e não haverá localidade geral nesta etapa.
+
+### 3. Campos da equipe — decidido
+
+A equipe possui nome obrigatório de 2 a 100 caracteres, nome curto opcional de 2 a 30, sigla opcional de 2 a 10, cidade opcional de 2 a 100, cor principal opcional e cor secundária opcional. Espaços externos são removidos e campos opcionais vazios são tratados como ausência. A sigla aceita somente `A-Z` e números e é normalizada para maiúsculas. Cores usam `#RRGGBB` em maiúsculas e a secundária exige uma principal. Na ausência de nome curto, a interface usa o nome completo; sem sigla ou cores, usa apresentação neutra. Escudo e uploads permanecem fora do MVP.
+
+### 4. Status — decidido
+
+O ciclo possui somente `Draft`, `Published` e `Finished`. Os códigos estáveis são `1 = Draft`, `2 = Published` e `3 = Finished`. `Published` cobre todo o período público e ativo. Não haverá `InProgress`, `Cancelled` ou `Archived` nesta etapa.
+
+Transições permitidas:
+
+```text
+Draft → Published
+Published → Draft, somente enquanto não existirem rodadas ou partidas
+Published → Finished
+Finished → Published
+```
+
+Não existem transições diretas entre `Draft` e `Finished`. Retornos exigem confirmação na interface.
+
+### 5. Publicação — decidido
+
+A publicação é permissiva quanto aos participantes: não exige nenhuma equipe inscrita. Exige nome e slug válidos e, quando informadas, datas coerentes. A descrição permanece opcional. A visibilidade pública é determinada pelo status, sem campo `is_public` separado: `Draft` é privado, enquanto `Published` e `Finished` são públicos. O retorno para `Draft` segue as transições já aprovadas.
+
+### 6. Slug — decidido
+
+O slug é globalmente único, gerado a partir do nome em ASCII minúsculo com palavras separadas por hífens. Colisões recebem sufixo numérico crescente, como `copa-do-bairro-2` e `copa-do-bairro-3`, mantendo constraint única no banco para concorrência. Pode ser ajustado manualmente enquanto o campeonato estiver em `Draft` e nunca tiver sido publicado. Depois da primeira publicação torna-se imutável, mesmo que o campeonato retorne a `Draft` ou que o nome exibido seja alterado, preservando a URL pública.
+
+### 7. Unicidade de nomes — decidido
+
+Nomes de campeonato podem se repetir porque o slug os identifica publicamente. O nome da equipe é único dentro do catálogo do proprietário, ignorando maiúsculas, minúsculas e espaços externos. A aplicação mantém uma coluna técnica `normalized_name` com maiúsculas invariantes, protegida por índice único junto de `owner_user_id`; o nome exibido preserva a capitalização original.
+
+### 8. Remoção e reinscrição — decidido
+
+Remover uma equipe preenche `removed_at` e mantém o vínculo. Reinscrever a mesma equipe limpa `removed_at` e reativa esse registro, preservando seu identificador para referências futuras. O MVP não registra múltiplos períodos completos de entrada e saída. Equipes removidas não aparecem na lista pública atual, mas permanecem visíveis na administração e em registros históricos que as referenciem.
+
+### 9. Exclusão — decidido
+
+Campeonato só pode ser excluído fisicamente quando estiver em `Draft` e não possuir qualquer vínculo de participação ou outra dependência. Equipe só pode ser excluída fisicamente se nunca tiver sido inscrita em campeonato. Nos demais casos a operação é bloqueada. Não haverá soft delete nem arquivamento nesta etapa.
+
+### 10. Participantes — decidido
+
+Não há quantidade mínima para publicação nem limite máximo de equipes. A combinação campeonato/equipe é única e a reinscrição reutiliza o vínculo removido. Equipes removidas não aparecem na lista pública atual. Participantes podem ser adicionados ou removidos em `Draft` e `Published`. Em `Finished`, alterações exigem reabertura. A etapa 5 definirá as restrições de remoção quando existirem partidas pendentes. A ordenação padrão é alfabética pelo nome da equipe, ignorando maiúsculas e acentos; `registered_at` não determina a ordenação.
+
+### 11. Recurso de outro proprietário — decidido
+
+Recursos administrativos são consultados por ID já filtrando o proprietário. Recurso inexistente e recurso pertencente a outro usuário retornam igualmente `404 Not Found`, evitando confirmar sua existência. `403 Forbidden` permanece disponível para contextos em que a existência do recurso já seja legitimamente conhecida.
+
+### 12. Concorrência — decidido
+
+Será usada a política de última gravação válida, sem token de concorrência otimista nesta etapa. Duas abas podem sobrescrever alterações entre si. `updated_at` permanece informativo e não representa versão.
+
+### 13. Paginação administrativa — decidido
+
+Listas administrativas de campeonatos, equipes e participantes não serão paginadas nesta etapa. Campeonatos são ordenados por `updated_at` decrescente, depois por nome e UUID. O catálogo de equipes e participantes usa ordem alfabética pelo nome, ignorando maiúsculas e acentos, com UUID como desempate. Paginação e listagem pública ampla permanecem para a etapa 7 ou para quando houver volume real que justifique a mudança.
+
+### 14. Página pública inicial — decidido
+
+Um único endpoint retorna os dados básicos do campeonato e seus participantes ativos. Rodadas, partidas e estatísticas terão endpoints próprios nas etapas correspondentes.
+
+## Registro da implementação — 24 de outubro de 2026
+
+Foram entregues:
+
+- entidades de domínio para campeonato, status, equipe e participação, com as transições e restrições aprovadas;
+- casos de uso com `Result`/`Result<T>`, autorização por proprietário e DTOs administrativos e públicos distintos;
+- endpoints administrativos de campeonatos, comandos de status, catálogo de equipes e gerenciamento idempotente de participantes;
+- endpoint público agregado por slug, limitado a campeonatos publicados ou finalizados e participantes ativos;
+- persistência EF Core com Fluent API, relacionamentos restritos, índices de unicidade e a tabela de referência de status;
+- migration `20261024211759_ChampionshipsAndTeams`, revisada e aplicada explicitamente ao PostgreSQL local;
+- painel Angular protegido, catálogo e formulários de equipes, listagem, formulário, detalhe e participantes do campeonato;
+- página pública responsiva em `/championships/:slug`, incluindo estados de carregamento, vazio, erro e não encontrado;
+- quatro testes unitários das regras de domínio da etapa, somados aos testes existentes.
+
+O campo técnico `published_at` registra a primeira publicação. Ele permite manter o slug bloqueado mesmo se o campeonato retornar a rascunho, sem expor esse instante nos contratos públicos.
+
+Validações concluídas:
+
+- solution backend compilada sem erros ou avisos;
+- 15 testes backend aprovados;
+- build de produção Angular aprovado;
+- 9 testes Angular aprovados no ChromeHeadless;
+- migration aplicada ao database local existente sem recriá-lo;
+- fluxo manual validado com dois usuários, dois times e um campeonato: criação, inscrição, publicação, consulta pública e finalização;
+- a consulta pública retornou apenas as duas equipes ativas;
+- o segundo usuário recebeu `404` ao consultar administrativamente o campeonato do primeiro;
+- a remoção de participante após a finalização foi recusada com `409`;
+- o campeonato finalizado permaneceu acessível pela URL pública.
+- nome de equipe duplicado para o mesmo proprietário foi recusado com `409`;
+- inscrição já ativa e reinscrição foram idempotentes, reutilizando o vínculo com `200`;
+- campeonato em rascunho permaneceu indisponível publicamente com `404`;
+- alteração do slug após a primeira publicação foi recusada com `409`;
+- equipe nunca utilizada pôde ser excluída, enquanto equipe já participante e campeonato com histórico tiveram a exclusão recusada com `409`.
+
+A validação manual criou dados identificados como teste no database compartilhado e não executou limpeza automática.
 
 ## Dependências
 
-- etapa 2 concluída.
-
-## Critério de conclusão
-
-Usuário cria um campeonato, inclui equipes e somente ele pode alterar esses dados. Um campeonato publicável pode ser consultado anonimamente.
-
-## Decisões já tomadas
-
-- usuário gerencia somente campeonatos próprios;
-- status em tabela separada com código numérico e descrição;
-- códigos controlados por migration e enum;
-- campeonato em rascunho não é público;
-- imagens ficam fora do MVP.
-
-## Decisões pendentes
-
-- campos definitivos de campeonato e equipe;
-- códigos e transições finais de status;
-- regras para publicação;
-- formato e unicidade do slug;
-- comportamento de exclusão;
-- reutilização de equipe em vários campeonatos;
-- endpoints definitivos e telas.
-
+- etapa 2 concluída e validada;
+- identidade autenticada disponível para obter o proprietário;
+- `LocalScoreDbContext` e infraestrutura de migrations existentes;
+- nenhuma dependência de Docker ou Testcontainers.
 ---
 
 # Etapa 4 — Jogadores e inscrições

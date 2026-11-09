@@ -1,0 +1,11 @@
+<header class="app-header">
+  <div class="app-header__inner">
+    <a class="brand" routerLink="/app">LocalScore</a>
+    <nav aria-label="Navegação principal">
+      <a routerLink="/app/championships" routerLinkActive="active">Campeonatos</a>
+      <a routerLink="/app/teams" routerLinkActive="active">Equipes</a>
+    </nav>
+    <button class="button button--ghost" type="button" (click)="authService.logout()">Sair</button>
+  </div>
+</header>
+<router-outlet />

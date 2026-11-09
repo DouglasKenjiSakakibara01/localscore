@@ -1,0 +1,76 @@
+<header class="public-topbar">
+  <a class="brand" routerLink="/">LocalScore</a>
+  <a class="button button--ghost" routerLink="/login">
+    Área do organizador
+  </a>
+</header>
+
+<main class="public-page">
+  @if (loading()) {
+    <div class="state-card">Carregando campeonato…</div>
+  } @else if (notFound()) {
+    <div class="state-card">
+      <span class="eyebrow">404</span>
+      <h1>Campeonato não encontrado</h1>
+      <p>O endereço não existe ou o campeonato ainda não está público.</p>
+      <a class="button button--primary" routerLink="/">Ir para o início</a>
+    </div>
+  } @else if (championship(); as item) {
+    <header class="public-hero">
+      <span class="status status--{{ item.status.code }}">
+        {{ item.status.description }}
+      </span>
+      <h1>{{ item.name }}</h1>
+
+      @if (item.description) {
+        <p>{{ item.description }}</p>
+      }
+
+      @if (item.startDate || item.endDate) {
+        <div class="period">
+          {{
+            item.startDate
+              ? (item.startDate | date: 'dd/MM/yyyy' : 'UTC')
+              : 'Data inicial aberta'
+          }}
+          —
+          {{
+            item.endDate
+              ? (item.endDate | date: 'dd/MM/yyyy' : 'UTC')
+              : 'Data final aberta'
+          }}
+        </div>
+      }
+    </header>
+
+    <section>
+      <span class="eyebrow">Participantes</span>
+      <h2>Equipes</h2>
+
+      @if (item.teams.length === 0) {
+        <div class="state-card">
+          As equipes participantes ainda serão divulgadas.
+        </div>
+      } @else {
+        <div class="card-grid">
+          @for (team of item.teams; track team.id) {
+            <article class="team-card">
+              <span
+                class="team-mark"
+                [style.background]="team.primaryColor || '#d8e3dc'"
+              >
+                {{ team.acronym || team.name.slice(0, 2).toUpperCase() }}
+              </span>
+              <div>
+                <h3>{{ team.name }}</h3>
+                <p>
+                  {{ team.shortName || team.city || 'Equipe participante' }}
+                </p>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</main>

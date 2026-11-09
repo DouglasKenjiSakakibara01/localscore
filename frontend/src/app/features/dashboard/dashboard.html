@@ -1,11 +1,4 @@
-<main class="dashboard-page">
-  <nav class="topbar">
-    <a class="brand" href="/app">LocalScore</a>
-    <button class="button button--ghost" type="button" (click)="authService.logout()">
-      Sair
-    </button>
-  </nav>
-
+<main class="page-shell">
   <section class="dashboard-card">
     <span class="eyebrow">Área autenticada</span>
     <h1>Olá, {{ authService.user()?.name }}!</h1>
@@ -23,5 +16,9 @@
         <dd>Autenticada</dd>
       </div>
     </dl>
+    <div class="action-row">
+      <a class="button button--primary" href="/app/championships">Ver campeonatos</a>
+      <a class="button button--ghost" href="/app/teams">Ver equipes</a>
+    </div>
   </section>
 </main>

@@ -1,4 +1,5 @@
 using LocalScore.Infrastructure.Identity;
+using LocalScore.Domain.Championships;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,14 @@ public sealed class LocalScoreDbContext(
         IdentityUserToken<Guid>>(options)
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<ChampionshipStatus> ChampionshipStatuses => Set<ChampionshipStatus>();
+
+    public DbSet<Championship> Championships => Set<Championship>();
+
+    public DbSet<Team> Teams => Set<Team>();
+
+    public DbSet<ChampionshipTeam> ChampionshipTeams => Set<ChampionshipTeam>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

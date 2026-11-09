@@ -1,0 +1,88 @@
+<main class="page-shell page-shell--narrow">
+  <a
+    class="back-link"
+    [routerLink]="id ? ['/app/championships', id] : ['/app/championships']"
+  >
+    ← Voltar
+  </a>
+
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Campeonato</span>
+      <h1>{{ id ? 'Editar campeonato' : 'Novo campeonato' }}</h1>
+      <p>Datas são opcionais e representam o período planejado.</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state-card">Carregando…</div>
+  } @else {
+    <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
+      <label>
+        Nome
+        <input formControlName="name" maxlength="120" autocomplete="off" />
+
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small>Informe entre 3 e 120 caracteres.</small>
+        }
+      </label>
+
+      <label>
+        Slug
+        <input
+          formControlName="slug"
+          maxlength="100"
+          placeholder="Gerado automaticamente se vazio"
+          autocomplete="off"
+        />
+        <small>
+          {{
+            canChangeSlug()
+              ? 'Use letras, números e hífens. A normalização é automática.'
+              : 'O slug fica bloqueado após a primeira publicação.'
+          }}
+        </small>
+      </label>
+
+      <label>
+        Descrição
+        <textarea
+          formControlName="description"
+          maxlength="1000"
+          rows="5"
+        ></textarea>
+      </label>
+
+      <div class="form-grid">
+        <label>
+          Data inicial
+          <input type="date" formControlName="startDate" />
+        </label>
+        <label>
+          Data final
+          <input type="date" formControlName="endDate" />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <a
+          class="button button--ghost"
+          [routerLink]="id ? ['/app/championships', id] : ['/app/championships']"
+        >
+          Cancelar
+        </a>
+        <button
+          class="button button--primary"
+          type="submit"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Salvando…' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+  }
+</main>

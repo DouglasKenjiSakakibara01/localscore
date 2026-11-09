@@ -1,6 +1,9 @@
 using System.Text;
 using LocalScore.Application.Authentication;
+using LocalScore.Application.Championships;
+using LocalScore.Application.Teams;
 using LocalScore.Infrastructure.Authentication;
+using LocalScore.Infrastructure.Championships;
 using LocalScore.Infrastructure.Identity;
 using LocalScore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -59,6 +62,8 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<IChampionshipService, ChampionshipService>();
+        services.AddScoped<ITeamService, TeamService>();
 
         return services;
     }
